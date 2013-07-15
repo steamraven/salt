@@ -398,8 +398,29 @@ class Pillar(object):
         pillar, errors = self.render_pillar(matches)
         self.ext_pillar(pillar)
         errors.extend(terrors)
-        if self.opts.get('pillar_opts', True):
-            mopts = dict(self.opts)
+        pillar_opts = self.opts.get('pillar_opts', True)
+        if pillar_opts != False:
+            mopts = dict()
+
+            if pillar_opts is True:
+                #no white_list, pull all opts
+                mopts = dict(self.opts)
+            elif isinstance(pillar_opts, list):
+                #implied white list
+                for key in pillar_opts:
+                    mopts[key] = self.opts[key]
+            elif isinstance(pillar_opts, dict):
+                if "present" in pillar_opts:
+                    for key in pillar_opts['present']:
+                        mopts[key] = self.opts[key]
+                else:
+                    # no white_list, pull all opts
+                    mopts = dict(self.opts)  
+                if "absent" in pillar_opts:
+                    #black list
+                    for key in pillar_opts['absent']:
+                        mopts.pop(key)     
+            # global blacklist
             if 'grains' in mopts:
                 mopts.pop('grains')
             if 'aes' in mopts:
